@@ -1,18 +1,18 @@
 import argparse
-import numpy as np
 import os
 import re
 import time
+from contextlib import nullcontext
+from itertools import islice
+from random import randint
+
+import numpy as np
 import torch
 from PIL import Image
-from contextlib import contextmanager, nullcontext
 from einops import rearrange
-from itertools import islice
 from omegaconf import OmegaConf
 from pytorch_lightning import seed_everything
-from random import randint
 from torch import autocast
-from torchvision.utils import make_grid
 from tqdm import tqdm, trange
 from transformers import logging
 

@@ -108,7 +108,7 @@ class Upsample(nn.Module):
 
 
 class TransposedUpsample(nn.Module):
-    'Learned 2x upsampling without padding'
+    """Learned 2x upsampling without padding"""
 
     def __init__(self, channels, out_channels=None, ks=5):
         super().__init__()

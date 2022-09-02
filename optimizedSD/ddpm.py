@@ -7,20 +7,18 @@ https://github.com/CompVis/taming-transformers
 """
 
 import math
+from functools import partial
+
 import numpy as np
 import pytorch_lightning as pl
-import time
 import torch
-import torch.nn as nn
 from einops import rearrange
-from functools import partial
 from pytorch_lightning.utilities.distributed import rank_zero_only
 from tqdm import tqdm
 from tqdm.auto import trange, tqdm
 
 from ldm.models.autoencoder import VQModelInterface
-from ldm.modules.diffusionmodules.util import make_beta_schedule
-from ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
+from ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor
 from ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like
 from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
 from ldm.util import exists, default, instantiate_from_config
@@ -40,7 +38,7 @@ class DDPM(pl.LightningModule):
                  timesteps=1000,
                  beta_schedule="linear",
                  ckpt_path=None,
-                 ignore_keys=[],
+                 ignore_keys=None,
                  load_only_unet=False,
                  monitor="val/loss",
                  use_ema=True,
@@ -62,6 +60,8 @@ class DDPM(pl.LightningModule):
                  use_positional_encodings=False,
                  ):
         super().__init__()
+        if ignore_keys is None:
+            ignore_keys = []
         assert parameterization in ["eps", "x0"], 'currently only supporting "eps" and "x0"'
         self.parameterization = parameterization
         print(f"{self.__class__.__name__}: Running in {self.parameterization}-prediction mode")
@@ -399,7 +399,7 @@ class UNet(DDPM):
 
     def apply_model(self, x_noisy, t, cond, return_ids=False):
 
-        if (not self.turbo):
+        if not self.turbo:
             self.model1.to(self.cdevice)
 
         step = self.unet_bs
@@ -416,7 +416,7 @@ class UNet(DDPM):
             for j in range(lenhs):
                 hs[j] = torch.cat((hs[j], hs_temp[j]))
 
-        if (not self.turbo):
+        if not self.turbo:
             self.model1.to("cpu")
             self.model2.to(self.cdevice)
 
@@ -428,7 +428,7 @@ class UNet(DDPM):
             x_recon1 = self.model2(h[i:i + step], emb[i:i + step], x_noisy.dtype, hs_temp, cond[i:i + step])
             x_recon = torch.cat((x_recon, x_recon1))
 
-        if (not self.turbo):
+        if not self.turbo:
             self.model2.to("cpu")
 
         if isinstance(x_recon, tuple) and not return_ids:
@@ -485,7 +485,7 @@ class UNet(DDPM):
                unconditional_conditioning=None,
                ):
 
-        if (self.turbo):
+        if self.turbo:
             self.model1.to(self.cdevice)
             self.model2.to(self.cdevice)
 
@@ -534,7 +534,7 @@ class UNet(DDPM):
         #     samples = self.heun_sampling(noise, sig, conditioning, unconditional_conditioning=unconditional_conditioning,
         #                                 unconditional_guidance_scale=unconditional_guidance_scale)
 
-        if (self.turbo):
+        if self.turbo:
             self.model1.to("cpu")
             self.model2.to("cpu")
 
