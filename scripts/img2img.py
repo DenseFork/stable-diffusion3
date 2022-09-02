@@ -1,23 +1,26 @@
 """make variations of input image"""
 
-import argparse, os, sys, glob
 import PIL
-import torch
+import argparse
+import glob
 import numpy as np
-from omegaconf import OmegaConf
-from PIL import Image
-from tqdm import tqdm, trange
-from itertools import islice
-from einops import rearrange, repeat
-from torchvision.utils import make_grid
-from torch import autocast
-from contextlib import nullcontext
+import os
+import sys
 import time
+import torch
+from PIL import Image
+from contextlib import nullcontext
+from einops import rearrange, repeat
+from itertools import islice
+from omegaconf import OmegaConf
 from pytorch_lightning import seed_everything
+from torch import autocast
+from torchvision.utils import make_grid
+from tqdm import tqdm, trange
 
-from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+from ldm.util import instantiate_from_config
 
 
 def chunk(it, size):
@@ -54,7 +57,7 @@ def load_img(path):
     image = np.array(image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
-    return 2.*image - 1.
+    return 2. * image - 1.
 
 
 def main():
@@ -256,10 +259,10 @@ def main():
                         c = model.get_learned_conditioning(prompts)
 
                         # encode (scaled latent)
-                        z_enc = sampler.stochastic_encode(init_latent, torch.tensor([t_enc]*batch_size).to(device))
+                        z_enc = sampler.stochastic_encode(init_latent, torch.tensor([t_enc] * batch_size).to(device))
                         # decode it
                         samples = sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=opt.scale,
-                                                 unconditional_conditioning=uc,)
+                                                 unconditional_conditioning=uc, )
 
                         x_samples = model.decode_first_stage(samples)
                         x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)

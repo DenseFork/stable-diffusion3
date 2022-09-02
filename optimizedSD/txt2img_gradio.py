@@ -1,29 +1,33 @@
 import gradio as gr
 import numpy as np
-import torch
-from torchvision.utils import make_grid
-from einops import rearrange
-import os, re
-from PIL import Image
-import torch
-import pandas as pd
 import numpy as np
-from random import randint
-from omegaconf import OmegaConf
-from PIL import Image
-from tqdm import tqdm, trange
-from itertools import islice
-from einops import rearrange
-from torchvision.utils import make_grid
+import os
+import pandas as pd
+import re
 import time
-from pytorch_lightning import seed_everything
-from torch import autocast
+import torch
+import torch
+from PIL import Image
+from PIL import Image
 from contextlib import nullcontext
+from einops import rearrange
+from einops import rearrange
+from itertools import islice
+from omegaconf import OmegaConf
+from pytorch_lightning import seed_everything
+from random import randint
+from torch import autocast
+from torchvision.utils import make_grid
+from torchvision.utils import make_grid
+from tqdm import tqdm, trange
+from transformers import logging
+
 from ldm.util import instantiate_from_config
 from optimUtils import split_weighted_subprompts, logger
-from transformers import logging
+
 logging.set_verbosity_error()
 import mimetypes
+
 mimetypes.init()
 mimetypes.add_type("application/javascript", ".js")
 
@@ -40,6 +44,7 @@ def load_model_from_config(ckpt, verbose=False):
         print(f"Global Step: {pl_sd['global_step']}")
     sd = pl_sd["state_dict"]
     return sd
+
 
 config = "optimizedSD/v1-inference.yaml"
 ckpt = "models/ldm/stable-diffusion-v1/model.ckpt"
@@ -78,24 +83,23 @@ del sd
 
 
 def generate(
-    prompt,
-    ddim_steps,
-    n_iter,
-    batch_size,
-    Height,
-    Width,
-    scale,
-    ddim_eta,
-    unet_bs,
-    device,
-    seed,
-    outdir,
-    img_format,
-    turbo,
-    full_precision,
-    sampler,
+        prompt,
+        ddim_steps,
+        n_iter,
+        batch_size,
+        Height,
+        Width,
+        scale,
+        ddim_eta,
+        unet_bs,
+        device,
+        seed,
+        outdir,
+        img_format,
+        turbo,
+        full_precision,
+        sampler,
 ):
-
     C = 4
     f = 8
     start_code = None
@@ -122,7 +126,7 @@ def generate(
     sample_path = os.path.join(outpath, "_".join(re.split(":| ", prompt)))[:150]
     os.makedirs(sample_path, exist_ok=True)
     base_count = len(os.listdir(sample_path))
-    
+
     # n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     assert prompt is not None
     data = [batch_size * [prompt]]
@@ -178,13 +182,12 @@ def generate(
                         unconditional_conditioning=uc,
                         eta=ddim_eta,
                         x_T=start_code,
-                        sampler = sampler,
+                        sampler=sampler,
                     )
 
                     modelFS.to(device)
                     print("saving images")
                     for i in range(batch_size):
-
                         x_samples_ddim = modelFS.decode_first_stage(samples_ddim[i].unsqueeze(0))
                         x_sample = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
                         all_samples.append(x_sample.to("cpu"))
@@ -215,12 +218,12 @@ def generate(
     grid = 255.0 * rearrange(grid, "c h w -> h w c").cpu().numpy()
 
     txt = (
-        "Samples finished in "
-        + str(round(time_taken, 3))
-        + " minutes and exported to "
-        + sample_path
-        + "\nSeeds used = "
-        + seeds[:-1]
+            "Samples finished in "
+            + str(round(time_taken, 3))
+            + " minutes and exported to "
+            + sample_path
+            + "\nSeeds used = "
+            + seeds[:-1]
     )
     return Image.fromarray(grid.astype(np.uint8)), txt
 

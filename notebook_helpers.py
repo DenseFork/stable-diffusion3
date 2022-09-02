@@ -1,23 +1,24 @@
-from torchvision.datasets.utils import download_url
-from ldm.util import instantiate_from_config
-import torch
+import ipywidgets as widgets
 import os
+import time
+import torch
+import torch
+import torchvision
+from IPython.display import Image as ipyimg
+from PIL import Image
+from einops import rearrange, repeat
 # todo ?
 from google.colab import files
-from IPython.display import Image as ipyimg
-import ipywidgets as widgets
-from PIL import Image
 from numpy import asarray
-from einops import rearrange, repeat
-import torch, torchvision
-from ldm.models.diffusion.ddim import DDIMSampler
-from ldm.util import ismap
-import time
 from omegaconf import OmegaConf
+from torchvision.datasets.utils import download_url
+
+from ldm.models.diffusion.ddim import DDIMSampler
+from ldm.util import instantiate_from_config
+from ldm.util import ismap
 
 
 def download_models(mode):
-
     if mode == "superresolution":
         # this is the small bsr light model
         url_conf = 'https://heibox.uni-heidelberg.de/f/31a76b13ea27482981b4/?dl=1'
@@ -29,8 +30,8 @@ def download_models(mode):
         download_url(url_conf, path_conf)
         download_url(url_ckpt, path_ckpt)
 
-        path_conf = path_conf + '/?dl=1' # fix it
-        path_ckpt = path_ckpt + '/?dl=1' # fix it
+        path_conf = path_conf + '/?dl=1'  # fix it
+        path_ckpt = path_ckpt + '/?dl=1'  # fix it
         return path_conf, path_ckpt
 
     else:
@@ -62,7 +63,7 @@ def get_custom_cond(mode):
     if mode == "superresolution":
         uploaded_img = files.upload()
         filename = next(iter(uploaded_img))
-        name, filetype = filename.split(".") # todo assumes just one dot in name !
+        name, filetype = filename.split(".")  # todo assumes just one dot in name !
         os.rename(f"{filename}", f"{dest}/{mode}/custom_{name}.{filetype}")
 
     elif mode == "text_conditional":
@@ -129,7 +130,6 @@ def visualize_cond_img(path):
 
 
 def run(model, selected_path, task, custom_steps, resize_enabled=False, classifier_ckpt=None, global_step=None):
-
     example = get_cond(task, selected_path)
 
     save_intermediate_vid = False
@@ -173,13 +173,14 @@ def run(model, selected_path, task, custom_steps, resize_enabled=False, classifi
 
         logs = make_convolutional_sample(example, model,
                                          mode=mode, custom_steps=custom_steps,
-                                         eta=eta, swap_mode=False , masked=masked,
+                                         eta=eta, swap_mode=False, masked=masked,
                                          invert_mask=invert_mask, quantize_x0=False,
                                          custom_schedule=None, decode_interval=10,
                                          resize_enabled=resize_enabled, custom_shape=custom_shape,
                                          temperature=temperature, noise_dropout=0.,
-                                         corrector=guider, corrector_kwargs=ckwargs, x_T=x_T, save_intermediate_vid=save_intermediate_vid,
-                                         make_progrow=make_progrow,ddim_use_x0_pred=ddim_use_x0_pred
+                                         corrector=guider, corrector_kwargs=ckwargs, x_T=x_T,
+                                         save_intermediate_vid=save_intermediate_vid,
+                                         make_progrow=make_progrow, ddim_use_x0_pred=ddim_use_x0_pred
                                          )
     return logs
 
@@ -190,7 +191,6 @@ def convsample_ddim(model, cond, steps, shape, eta=1.0, callback=None, normals_s
                     temperature=1., noise_dropout=0., score_corrector=None,
                     corrector_kwargs=None, x_T=None, log_every_t=None
                     ):
-
     ddim = DDIMSampler(model)
     bs = shape[0]  # dont know where this comes from but wayne
     shape = shape[1:]  # cut batch dim
@@ -208,7 +208,8 @@ def convsample_ddim(model, cond, steps, shape, eta=1.0, callback=None, normals_s
 def make_convolutional_sample(batch, model, mode="vanilla", custom_steps=None, eta=1.0, swap_mode=False, masked=False,
                               invert_mask=True, quantize_x0=False, custom_schedule=None, decode_interval=1000,
                               resize_enabled=False, custom_shape=None, temperature=1., noise_dropout=0., corrector=None,
-                              corrector_kwargs=None, x_T=None, save_intermediate_vid=False, make_progrow=True,ddim_use_x0_pred=False):
+                              corrector_kwargs=None, x_T=None, save_intermediate_vid=False, make_progrow=True,
+                              ddim_use_x0_pred=False):
     log = dict()
 
     z, c, x, xrec, xc = model.get_input(batch, model.first_stage_key,
@@ -237,7 +238,7 @@ def make_convolutional_sample(batch, model, mode="vanilla", custom_steps=None, e
         log["original_conditioning"] = xc if xc is not None else torch.zeros_like(x)
         if model.cond_stage_model:
             log[model.cond_stage_key] = xc if xc is not None else torch.zeros_like(x)
-            if model.cond_stage_key =='class_label':
+            if model.cond_stage_key == 'class_label':
                 log[model.cond_stage_key] = xc[model.cond_stage_key]
 
     with model.ema_scope("Plotting"):

@@ -1,17 +1,14 @@
 import importlib
-
-import torch
+import multiprocessing as mp
 import numpy as np
+import torch
+from PIL import Image, ImageDraw, ImageFont
 from collections import abc
 from einops import rearrange
 from functools import partial
-
-import multiprocessing as mp
-from threading import Thread
-from queue import Queue
-
 from inspect import isfunction
-from PIL import Image, ImageDraw, ImageFont
+from queue import Queue
+from threading import Thread
 
 
 def log_txt_as_img(wh, xc, size=10):

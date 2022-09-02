@@ -1,22 +1,26 @@
-import argparse, os, re
-import torch
+import argparse
 import numpy as np
-from random import randint
-from omegaconf import OmegaConf
-from PIL import Image
-from tqdm import tqdm, trange
-from itertools import islice
-from einops import rearrange
-from torchvision.utils import make_grid
+import os
+import pandas as pd
+import re
 import time
-from pytorch_lightning import seed_everything
-from torch import autocast
+import torch
+from PIL import Image
 from contextlib import contextmanager, nullcontext
+from einops import rearrange
 from einops import rearrange, repeat
+from itertools import islice
+from omegaconf import OmegaConf
+from pytorch_lightning import seed_everything
+from random import randint
+from torch import autocast
+from torchvision.utils import make_grid
+from tqdm import tqdm, trange
+from transformers import logging
+
 from ldm.util import instantiate_from_config
 from optimUtils import split_weighted_subprompts, logger
-from transformers import logging
-import pandas as pd
+
 logging.set_verbosity_error()
 
 
@@ -35,7 +39,6 @@ def load_model_from_config(ckpt, verbose=False):
 
 
 def load_img(path, h0, w0):
-
     image = Image.open(path).convert("RGB")
     w, h = image.size
 
@@ -186,7 +189,7 @@ if opt.seed == None:
 seed_everything(opt.seed)
 
 # Logging
-logger(vars(opt), log_csv = "logs/img2img_logs.csv")
+logger(vars(opt), log_csv="logs/img2img_logs.csv")
 
 sd = load_model_from_config(f"{ckpt}")
 li, lo = [], []
@@ -258,11 +261,9 @@ if opt.device != "cpu":
     while torch.cuda.memory_allocated() / 1e6 >= mem:
         time.sleep(1)
 
-
 assert 0.0 <= opt.strength <= 1.0, "can only work with strength in [0.0, 1.0]"
 t_enc = int(opt.strength * opt.ddim_steps)
 print(f"target t_enc is {t_enc} steps")
-
 
 if opt.precision == "autocast" and opt.device != "cpu":
     precision_scope = autocast
@@ -271,7 +272,6 @@ else:
 
 seeds = ""
 with torch.no_grad():
-
     all_samples = list()
     for n in trange(opt.n_iter, desc="Sampling"):
         for prompts in tqdm(data, desc="data"):
@@ -322,13 +322,12 @@ with torch.no_grad():
                     z_enc,
                     unconditional_guidance_scale=opt.scale,
                     unconditional_conditioning=uc,
-                    sampler = opt.sampler
+                    sampler=opt.sampler
                 )
 
                 modelFS.to(opt.device)
                 print("saving images")
                 for i in range(batch_size):
-
                     x_samples_ddim = modelFS.decode_first_stage(samples_ddim[i].unsqueeze(0))
                     x_sample = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
                     x_sample = 255.0 * rearrange(x_sample[0].cpu().numpy(), "c h w -> h w c")
@@ -354,9 +353,9 @@ time_taken = (toc - tic) / 60.0
 
 print(
     (
-        "Samples finished in {0:.2f} minutes and exported to "
-        + sample_path
-        + "\n Seeds used = "
-        + seeds[:-1]
+            "Samples finished in {0:.2f} minutes and exported to "
+            + sample_path
+            + "\n Seeds used = "
+            + seeds[:-1]
     ).format(time_taken)
 )

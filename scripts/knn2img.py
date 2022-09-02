@@ -1,22 +1,25 @@
-import argparse, os, sys, glob
+import argparse
 import clip
+import glob
+import numpy as np
+import os
+import scann
+import sys
+import time
 import torch
 import torch.nn as nn
-import numpy as np
-from omegaconf import OmegaConf
 from PIL import Image
-from tqdm import tqdm, trange
-from itertools import islice
 from einops import rearrange, repeat
-from torchvision.utils import make_grid
-import scann
-import time
+from itertools import islice
 from multiprocessing import cpu_count
+from omegaconf import OmegaConf
+from torchvision.utils import make_grid
+from tqdm import tqdm, trange
 
-from ldm.util import instantiate_from_config, parallel_data_prefetch
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from ldm.modules.encoders.modules import FrozenClipImageEmbedder, FrozenCLIPTextEmbedder
+from ldm.util import instantiate_from_config, parallel_data_prefetch
 
 DATABASES = [
     "openimages",
@@ -134,7 +137,7 @@ class Searcher(object):
 
     def search(self, x, k):
         if self.searcher is None and self.database['embedding'].shape[0] < 2e4:
-            self.train_searcher(k)   # quickly fit searcher on the fly for small databases
+            self.train_searcher(k)  # quickly fit searcher on the fly for small databases
         assert self.searcher is not None, 'Cannot search with uninitialized searcher'
         if isinstance(x, torch.Tensor):
             x = x.detach().cpu().numpy()
