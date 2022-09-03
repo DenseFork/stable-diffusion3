@@ -24,7 +24,10 @@ VRAM.
 All the modified files are in the [optimizedSD](optimizedSD) folder, so if you have already cloned the original
 repository you can just download and copy this folder into the original instead of cloning the entire repo. You can also
 clone this repo and follow the same installation steps as the original (mainly creating the conda environment and
-placing the weights at the specified location).
+placing the weights at the specified location). <br>
+So run: <br>
+`conda env create -f environment.yaml` <br>
+`conda activate ldm`
 
 Alternatively, if you prefer to use Docker, you can do the following:
 
