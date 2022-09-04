@@ -1,6 +1,7 @@
-# Update: v0.9 neon optimization edition
+# Update: v0.9.1 neon insane optimization edition
 
-[Added support for inpainting](#inpainting)
+Now can generate 768x2048 and 1216x1216 on 8 gb vram <br>
+tested on rtx 3070, speed for 1216x1216 50 steps is 
 
 <h1 align="center">Optimized Stable Diffusion</h1>
 <p align="center">
