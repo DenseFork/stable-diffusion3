@@ -76,6 +76,17 @@ scripts.
 
 - _Suggestions to improve the inpainting algorithm are most welcome_.
 
+## img2img interpolation
+
+- `img2img_interpolate.py` creates an animation of image transformation using a text prompt
+
+- To launch the gradio interface for inpainting, run `python optimizedSD/img2img_interpolate.py`. The mask for the image can
+  be drawn on the selected image using the brush tool.
+
+- The results are not yet perfect but can be improved by using a combination of prompt weighting, prompt engineering and
+  testing out multiple values of the `--strength` argument.
+
+
 <h1 align="center">Using the Gradio GUI</h1>
 
 - You can also use the built-in gradio interface for `img2img`, `txt2img` & `inpainting` instead of the command line
