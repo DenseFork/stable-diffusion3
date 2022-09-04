@@ -59,17 +59,18 @@ def load_img(image, h0, w0):
     return 2.0 * image - 1.0
 
 
-def load_mask(mask, h0, w0, invert=False):
+def load_mask(mask, h0, w0, newH, newW, invert=False):
     image = mask.convert("RGB")
     w, h = image.size
-    print(f"loaded input image of size ({w}, {h})")
+    print(f"loaded input mask of size ({w}, {h})")
     if h0 is not None and w0 is not None:
         h, w = h0, w0
 
     w, h = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 32
 
-    print(f"New image size ({w}, {h})")
-    image = image.resize((64, 64), resample=Image.LANCZOS)
+    print(f"New mask size ({w}, {h})")
+    image = image.resize((newW, newH), resample=Image.LANCZOS)
+    # image = image.resize((64, 64), resample=Image.LANCZOS)
     image = np.array(image)
 
     if invert:
@@ -111,7 +112,6 @@ def generate(
     logger(locals(), log_csv="logs/inpaint_gradio_logs.csv")
 
     init_image = load_img(image['image'], Height, Width).to(device)
-    mask = load_mask(image['mask'], Height, Width, True).to(device)
 
     model.unet_bs = unet_bs
     model.turbo = turbo
@@ -123,10 +123,7 @@ def generate(
         modelCS.half()
         modelFS.half()
         init_image = init_image.half()
-        mask.half()
-
-    mask = mask[0][0].unsqueeze(0).repeat(4, 1, 1).unsqueeze(0)
-    mask = repeat(mask, '1 ... -> b ...', b=batch_size)
+        # mask.half()
 
     tic = time.time()
     os.makedirs(outdir, exist_ok=True)
@@ -143,6 +140,10 @@ def generate(
 
     init_latent = modelFS.get_first_stage_encoding(modelFS.encode_first_stage(init_image))  # move to latent space
     init_latent = repeat(init_latent, "1 ... -> b ...", b=batch_size)
+
+    mask = load_mask(image['mask'], Height, Width, init_latent.shape[2], init_latent.shape[3], True).to(device)
+    mask = mask[0][0].unsqueeze(0).repeat(4, 1, 1).unsqueeze(0)
+    mask = repeat(mask, '1 ... -> b ...', b=batch_size)
 
     if device != "cpu":
         mem = torch.cuda.memory_allocated() / 1e6
@@ -318,4 +319,4 @@ if __name__ == '__main__':
         ],
         outputs=["image", "image", "text"],
     )
-    demo.launch(share=True)
+    demo.launch()
