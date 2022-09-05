@@ -178,45 +178,20 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
 
-        # try:
-        #     sim = einsum('b i d, b j d -> b i j', q, k)  # (8, 4096, 40)
-        #     sim *= self.scale
-        #     q, k = q.cpu(), k.cpu()
-        #
-        #     if exists(mask):
-        #         mask = rearrange(mask, 'b ... -> b (...)')
-        #         max_neg_value = -torch.finfo(sim.dtype).max
-        #         mask = repeat(mask, 'b j -> (b h) () j', h=h)
-        #         sim.masked_fill_(~mask, max_neg_value)
-        #         del mask
-        #
-        #         # attention, what we cannot get enough of, by halves
-        #
-        #     sim[4:] = sim[4:].softmax(dim=-1)
-        #
-        #     sim[:4] = sim[:4].softmax(dim=-1)
-        #
-        #     sim = einsum('b i j, b j d -> b i d', sim, v)
-        #     sim = rearrange(sim, '(b h) n d -> b n (h d)', h=h)
-        #     return self.to_out(sim)
-        # except RuntimeError:
-        #     if "sim" in vars():
-        #         del sim
-        #     torch.cuda.empty_cache()
-        r1 = torch.zeros(q.shape[0], q.shape[1], v.shape[2])
-        for i in range(0, q.shape[0], 2):
-            q, k = q.cuda(), k.cuda()
-            s1 = einsum('b i d, b j d -> b i j', q[i:i + 2], k[i:i + 2])
-            q, k = q.cpu(), k.cpu()
+        r1 = torch.zeros(q.shape[0], q.shape[1], v.shape[2], device=q.device)
+        for i in range(0, q.shape[0], 1):
+            end = i + 1
+            s1 = einsum('b i d, b j d -> b i j', q[i:end], k[i:end])
             s1 *= self.scale
 
-            s1[1:] = s1[1:].softmax(dim=-1)
-            s1[:1] = s1[:1].softmax(dim=-1)
+            s2 = s1.softmax(dim=-1)
+            del s1
 
-            r1[i:i + 2] = einsum('b i j, b j d -> b i d', s1, v[i:i + 2]).cpu()
-        del s1
-        r2 = rearrange(r1.to(q.device), '(b h) n d -> b n (h d)', h=h).cuda()
-        del r1, q, k, v
+            r1[i:end] = einsum('b i j, b j d -> b i d', s2, v[i:end])
+            del s2
+
+        r2 = rearrange(r1, '(b h) n d -> b n (h d)', h=h)
+        del r1
 
         return self.to_out(r2)
 
