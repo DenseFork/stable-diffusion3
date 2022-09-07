@@ -8,7 +8,7 @@ tested on rtx 3070
     <img src="https://img.shields.io/github/last-commit/neonsecret/stable-diffusion?logo=Python&logoColor=green&style=for-the-badge"/>
         <img src="https://img.shields.io/github/issues/neonsecret/stable-diffusion?logo=GitHub&style=for-the-badge"/>
                 <img src="https://img.shields.io/github/stars/neonsecret/stable-diffusion?logo=GitHub&style=for-the-badge"/>
-    <a href="https://colab.research.google.com/github/ThreeOfTree/Test/blob/main/optimized_colab.ipynb">
+    <a href="https://colab.research.google.com/github/DenseFork/stable-diffusion/blob/main/optimized_colab.ipynb">
       <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
 </p>
